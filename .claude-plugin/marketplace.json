@@ -1,0 +1,14 @@
+{
+  "name": "datalyze",
+  "owner": { "name": "Datalyze", "email": "ansh@joindatalyze.com" },
+  "metadata": { "description": "Datalyze's plugins for Claude Code." },
+  "plugins": [
+    {
+      "name": "datalyze",
+      "source": "./datalyze",
+      "description": "The Datalyze Tracking Agent: audits your analytics tracking, says what each change needs, and builds the tracking changes you approve.",
+      "homepage": "https://www.joindatalyze.com/tracking-agent",
+      "category": "analytics"
+    }
+  ]
+}
