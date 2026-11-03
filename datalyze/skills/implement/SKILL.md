@@ -35,7 +35,7 @@ Run `validate` and `scan`, each with `base` set to the branch's base (the pull r
 
 ## 4. Have the verifier check it
 
-Give the `verifier` agent the code diff, the registry diff (`git diff <base> -- analytics/`), and the decisions already made: the approved targets with the reviewer's notes and answers (for audit findings, the finding ids and titles). Not your reasoning, not the proposal's summaries, not this conversation: its value is that it comes to the change cold. It reads the knowledge itself.
+Give the `verifier` agent the code diff, the registry diff (`git diff <base> -- analytics/`), and the decisions already made: the approved targets with the reviewer's notes and answers (for audit findings, the finding ids and titles). Not your reasoning, not the proposal's summaries, not this conversation: its value is that it comes to the change cold. It reads the knowledge itself. Wait for its answer before you go on: never start the verifier, or any subagent, in the background. Your run ends when you stop, so a round still running when you stop is lost, and so is the report.
 
 Apply its blockers and fixes, and run the checks again. When you disagree with one, keep the finding and write why in the report. At most two verifier rounds. A blocker or fix still open after that, disputed or not, becomes an open question on its item.
 
@@ -49,7 +49,7 @@ Mark each built item `"implemented": true` in the proposal file, so a later revi
 
 ## 6. Write the report
 
-`.datalyze/report.md` (the action posts it and doesn't commit it). Its first line is exactly one of:
+`.datalyze/report.md` (the action posts it and doesn't commit it). Write it before you stop, every time: a run that stops without it keeps nothing. Its first line is exactly one of:
 
 - `Implemented and verified` (every approved item built, checks and verifier passed)
 - `Implemented, <n> held back` (the rest are listed under Held back)

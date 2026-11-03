@@ -49,7 +49,7 @@ Then look for what isn't tracked at all. List the product's core actions (sign-u
 
 ## 7. Have the verifier try to disprove every finding
 
-Give the `verifier` agent the findings, numbered, with the code and data each one cites, and nothing about how you reached them. Keep what it confirms. Turn what it can't decide into an open question. Drop what it disproves, and say so in the report.
+Give the `verifier` agent the findings, numbered, with the code and data each one cites, and nothing about how you reached them. Keep what it confirms. Turn what it can't decide into an open question. Drop what it disproves, and say so in the report. Wait for its answer before you go on: never start the verifier, or any subagent, in the background. Your run ends when you stop, so a round still running when you stop is lost, and so is the report.
 
 ## 8. Write the audit
 
