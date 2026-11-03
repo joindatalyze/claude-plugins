@@ -41,6 +41,8 @@ Apply its blockers and fixes, and run the checks again. When you disagree with o
 
 Keep every item that passed the checks and the verifier. Hold back only the items with open questions: undo their edits in the plan and the code, and list them in the report with the question. One bad item never loses the rest.
 
+When the run built from a proposal, also add each held-back item's question to the proposal file's `questions`, with `item` set to its id, the options and your `recommended` (format in `../review/proposal-format.md`). That is where the Datalyze UI shows it and the person answers; the next run builds from the answer.
+
 Mark each built item `"implemented": true` in the proposal file, so a later review knows it is done. Leave all edits in the working tree; the Datalyze action commits them with its own token, so the team's CI runs on them.
 
 ## 6. Write the report
