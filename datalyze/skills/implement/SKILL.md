@@ -11,6 +11,8 @@ A person has already decided what changes. Build exactly that: the plan entries 
 
 Call the `knowledge` tool and read all five files. If the licence is inactive, say so in one line and stop.
 
+A `_map/` folder in the registry is a tracking map an older Datalyze version wrote. It's out of date: never read it, search it or edit it, and leave it out of everything you write.
+
 Read `.datalyze/context.md`, then what was approved:
 
 - **A proposal:** the pull request's proposal file on this branch (`.datalyze/proposals/pr-<n>.json`, or `branch-<branch>.json` on a laptop run), in the format in `../review/proposal-format.md` (from this skill's folder). Build the items marked approved. When the run comes from an `@datalyze apply` comment, every item not marked rejected counts as approved. The reviewer's edits to `proposed`, their notes and their answers to questions are binding. Rejected and undecided items are left alone.

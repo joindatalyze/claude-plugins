@@ -15,7 +15,7 @@ Call the `knowledge` tool. It checks the team's Datalyze licence and returns the
 
 ## 2. Read what the team has
 
-Read `.datalyze/context.md` (the team's own words about their product), `.datalyze/config.yaml`, and the plan with the `registry` tool. Note the scope you were asked for: the whole repo, an area, a list of events, or since a date.
+Read `.datalyze/context.md` (the team's own words about their product), `.datalyze/config.yaml`, and the plan with the `registry` tool. Note the scope you were asked for: the whole repo, an area, a list of events, or since a date. A `_map/` folder in the registry is a tracking map an older Datalyze version wrote. It's out of date: never read it, search it or edit it, and leave it out of everything you write.
 
 The **first audit** is the one where the plan has no events yet (the setup skeleton). It also writes the first plan, in step 5.
 
