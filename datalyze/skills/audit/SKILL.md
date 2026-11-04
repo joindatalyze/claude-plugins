@@ -15,7 +15,7 @@ Call the `knowledge` tool. It checks the team's Datalyze licence and returns the
 
 ## 2. Read what the team has
 
-Read `.datalyze/context.md` (the team's own words about their product), `.datalyze/config.yaml`, and the plan with the `registry` tool. Note the scope you were asked for: the whole repo, an area, a list of events, or since a date. A `_map/` folder in the registry is a tracking map an older Datalyze version wrote. It's out of date: never read it, search it or edit it, and leave it out of everything you write.
+Read `.datalyze/context.md` (the team's own words about their product), `.datalyze/decisions.yaml` if it's there (the team's answers to earlier audit questions: binding, and never asked again), `.datalyze/config.yaml`, and the plan with the `registry` tool. Note the scope you were asked for: the whole repo, an area, a list of events, or since a date. A `_map/` folder in the registry is a tracking map an older Datalyze version wrote. It's out of date: never read it, search it or edit it, and leave it out of everything you write.
 
 The **first audit** is the one where the plan has no events yet (the setup skeleton). It also writes the first plan, in step 5.
 
@@ -47,13 +47,21 @@ Call `match` with the snapshot and the scope you were asked for (events, area, o
 
 Then look for what isn't tracked at all. List the product's core actions (sign-up, login, each onboarding screen, the first value moment, creating or changing the main thing the product is for, money) and its server outcomes with no person present. Each core action with no event is a finding with a proposed event. Other untracked actions get a proposed event only within the budget per area; the rest are open questions.
 
+Then look the other way: at what is tracked but probably not needed. Check every live event against the "What not to track" section of `what-to-track.md`, reading the code around its call: what the person did to send it, and whether anything decides on it. Each one that breaks a rule is a drop candidate, not a finding: the team decides, in the Datalyze UI. For each, give the rule in a few words, one sentence on why this event breaks it, the call as evidence, its volume when there's data, and your recommendation:
+
+- **`drop`:** it carries no decision. Stop tracking it.
+- **`fold`:** it is one of several events for one action (a tab, a step, an entry point). Name the event and property it becomes in `fold_into` (`settings_changed.setting`), an existing event when there is one.
+- **`keep`:** it breaks the rule's letter but the team relies on it (`context.md` says so, or it is the one signal for something). Say so in the reason.
+
+Never list a core action, an onboarding screen, a money event, an identity call, or an event a funnel or another event's check depends on. Never list an event `decisions.yaml` already keeps (a decision whose `event` is its name). When unsure, leave it out: a candidate costs the team a decision.
+
 ## 7. Have the verifier try to disprove every finding
 
 Give the `verifier` agent the findings, numbered, with the code and data each one cites, and nothing about how you reached them. Keep what it confirms. Turn what it can't decide into an open question. Drop what it disproves, and say so in the report. Wait for its answer before you go on: never start the verifier, or any subagent, in the background. Your run ends when you stop, so a round still running when you stop is lost, and so is the report.
 
 ## 8. Write the audit
 
-**`audit.json`** (`audit-format.md`) is what the Datalyze UI reads. Check it with `check_audit`. If the check fails, fix the file from the error message and check again. Never discard it.
+**`audit.json`** (`audit-format.md`) is what the Datalyze UI reads: the findings, the open questions (with their options and your recommendation), the items with no data that aren't findings (each with its reason) and the drop candidates. The person answers the questions, picks findings to fix, picks no-data items to look into and keeps, stops or folds each drop candidate there, and one fix run builds all of it. Check it with `check_audit`. If the check fails, fix the file from the error message and check again. Never discard it.
 
 **`audit.md`,** next to it, for people:
 
@@ -61,7 +69,9 @@ Give the `verifier` agent the findings, numbered, with the code and data each on
 2. **How this product tracks today.** SDKs, wrappers, client and server, identity calls, and anything the scan can't see, with why.
 3. **Findings,** most important first, each with its evidence and fix.
 4. **Fix plan by product area.** Money and sign-up first, then core actions, then the rest. Each area becomes one fix pull request when its findings are picked.
-5. **Open questions,** each with options the person can pick in the Datalyze UI and your recommendation. Never ask them to send you something, run something, or change a setting.
+5. **Open questions,** each with options the person can pick in the Datalyze UI and your recommendation, the same ones as in `audit.json`. Never ask them to send you something, run something, or change a setting. Never ask again what `decisions.yaml` already answers.
+6. **Items with no data that aren't findings,** each with why no data is expected, the same ones as `no_data` in `audit.json`.
+7. **Tracked but probably not needed,** each drop candidate with its rule, reason and recommendation, the same ones as `drop_candidates` in `audit.json`.
 
 On the first audit, finish the plan last: fix what can be fixed in the plan, run `vocabulary` to write `_properties.yaml` from the plan, add a `synonyms:` entry for every property spelled two ways (`kb_id: knowledge_base_id`), run `vocabulary` again (it keeps synonyms), then `baseline` to accept the remaining problems, so later changes are judged only on what they add. Then `validate` must pass.
 

@@ -1,6 +1,6 @@
 ---
 name: implement
-description: Build analytics tracking changes a person approved, with Datalyze. Applies an approved tracking proposal (.datalyze/proposals/pr-<n>.json) or audit findings a person picked, changes the tracking plan and the track calls in the team's own style, runs the rules checks, and has an independent verifier check the result. Use for "implement the approved proposal", "@datalyze apply", "fix these audit findings", or when Datalyze dispatches an implement run.
+description: Build analytics tracking changes a person approved, with Datalyze. Applies an approved tracking proposal (.datalyze/proposals/pr-<n>.json), or a person's decisions on an audit (their answers to its questions, the findings they picked, no-data items to look into and their note), changes the tracking plan and the track calls in the team's own style, runs the rules checks, and has an independent verifier check the result. Use for "implement the approved proposal", "@datalyze apply", "fix these audit findings", or when Datalyze dispatches an implement run.
 ---
 
 # Implement
@@ -13,10 +13,16 @@ Call the `knowledge` tool and read all five files. If the licence is inactive, s
 
 A `_map/` folder in the registry is a tracking map an older Datalyze version wrote. It's out of date: never read it, search it or edit it, and leave it out of everything you write.
 
-Read `.datalyze/context.md`, then what was approved:
+Read `.datalyze/context.md` and `.datalyze/decisions.yaml` if it's there (the team's answers to earlier audit questions, binding), then what was approved:
 
 - **A proposal:** the pull request's proposal file on this branch (`.datalyze/proposals/pr-<n>.json`, or `branch-<branch>.json` on a laptop run), in the format in `../review/proposal-format.md` (from this skill's folder). Build the items marked approved. When the run comes from an `@datalyze apply` comment, every item not marked rejected counts as approved. The reviewer's edits to `proposed`, their notes and their answers to questions are binding. Rejected and undecided items are left alone.
-- **Audit findings:** the finding ids you were given, all from one product area, in the audit file (`audit.json` in the `.datalyze/` folder beside the registry). When it isn't on this branch, read it from the audit branch: `git show origin/datalyze/audit:analytics/.datalyze/audit.json`. For each finding, find why in the code and the data, and decide the smallest change that makes the plan, the code and the data agree: fix the call when the code is wrong, update the plan when the data shows the plan is stale. Don't add events beyond what the fix needs. A fix to an existing event follows the breaking-change protocol.
+- **A person's decisions on an audit:** `answers.json` next to the audit file (`audit.json` in the `.datalyze/` folder beside the registry), both on the audit branch: `git show origin/datalyze/audit:analytics/.datalyze/answers.json`. It holds, all for this one change, across every product area:
+  - **`answers`:** the option the person picked for each of the audit's `questions`. The picked option's text is binding: build what it says, in the plan, the code, `_conventions.yaml` or `.datalyze/context.md`, wherever it lands. `option: null` is "Decide later": leave that question alone. Apply the answers first, since they can change the rules the fixes are written against.
+  - **`findings`:** the finding ids to fix (below).
+  - **`look_into`:** no-data items from the audit's `no_data`. For each, trace the code path that should send it. If it's broken, fix it like a finding. If it's sound and the event simply hasn't happened, change nothing and say what you checked.
+  - **`tracking`:** the person's choice for events the audit's `drop_candidates` listed as probably not needed. `keep`: change nothing (the Datalyze action records it in `decisions.yaml`). `drop`: mark the event `deprecated` in the plan with the candidate's reason as `deprecated_reason`, and remove its call. `fold`: add the property in the candidate's `fold_into` to that event (a new event when it isn't in the plan yet), send it from the call sites, and deprecate the old event with `replaced_by`; a `dual_fire_until` window only when a report or another event's check uses the old one, else the old call goes now. An event left out of `tracking` is undecided: leave it alone.
+  - **`note`:** anything else the person wants done, in their words. Binding, like a reviewer's note. Do what it asks within tracking; what you can't do, or what reaches outside tracking, goes under Held back with why.
+- **Audit findings:** the finding ids you were given, in the audit file. When it isn't on this branch, read it from the audit branch: `git show origin/datalyze/audit:analytics/.datalyze/audit.json`. For each finding, find why in the code and the data, and decide the smallest change that makes the plan, the code and the data agree: fix the call when the code is wrong, update the plan when the data shows the plan is stale. Don't add events beyond what the fix needs. A fix to an existing event follows the breaking-change protocol. Every picked finding goes into this one change, whatever its area.
 
 ## 2. Change the plan and the calls
 
@@ -25,7 +31,7 @@ Read `.datalyze/context.md`, then what was approved:
 - **The calls:** through the wrapper the tracking profile names for that side, copying its example call: same import, same argument order, same style. Send exactly the plan's properties, with real values the code has at that moment. Fire at the moment the description says.
 - **A deprecation with a `dual_fire_until` date** keeps the old call next to the new one until that date. Without one, the old call goes.
 - **Nothing outside the approved items.** No refactors, renames, restyling or unrelated fixes.
-- **Never edit** `_conventions.yaml`, the `synonyms` in `_properties.yaml`, `_baseline.json`, `.datalyze/context.md`, `.datalyze/config.yaml`, `.claude/` or `.github/`.
+- **Never edit** `_conventions.yaml`, the `synonyms` in `_properties.yaml`, `_baseline.json`, `.datalyze/context.md`, `.datalyze/decisions.yaml`, `.datalyze/config.yaml`, `.claude/` or `.github/`. The one exception: a person's answer to an audit question that says to change `_conventions.yaml` or `context.md`. Make exactly the change the answer says, nothing more. The Datalyze action records the answers in `decisions.yaml` itself.
 
 If an item can't be built as written (the value doesn't exist at that moment, the event would fire twice), don't improvise. Leave it out and raise it as an open question with the options you see.
 
@@ -35,7 +41,7 @@ Run `validate` and `scan`, each with `base` set to the branch's base (the pull r
 
 ## 4. Have the verifier check it
 
-Give the `verifier` agent the code diff, the registry diff (`git diff <base> -- analytics/`), and the decisions already made: the approved targets with the reviewer's notes and answers (for audit findings, the finding ids and titles). Not your reasoning, not the proposal's summaries, not this conversation: its value is that it comes to the change cold. It reads the knowledge itself. Wait for its answer before you go on: never start the verifier, or any subagent, in the background. Your run ends when you stop, so a round still running when you stop is lost, and so is the report.
+Give the `verifier` agent the code diff, the registry diff (`git diff <base> -- analytics/`), and the decisions already made: the approved targets with the reviewer's notes and answers (for an audit, the finding ids and titles, each answered question with the picked option's text, the no-data items looked into, each event's tracking choice, and the person's note). Not your reasoning, not the proposal's summaries, not this conversation: its value is that it comes to the change cold. It reads the knowledge itself. Wait for its answer before you go on: never start the verifier, or any subagent, in the background. Your run ends when you stop, so a round still running when you stop is lost, and so is the report.
 
 Apply its blockers and fixes, and run the checks again. When you disagree with one, keep the finding and write why in the report. At most two verifier rounds. A blocker or fix still open after that, disputed or not, becomes an open question on its item.
 
@@ -58,8 +64,9 @@ Mark each built item `"implemented": true` in the proposal file, so a later revi
 Then:
 
 1. **What changed.** One line per item, in plain words, with the files.
-2. **Held back.** Each item with its open question.
-3. **Checks.** `validate` and `scan` results.
-4. **Verification.** Rounds run, findings applied, findings disputed and why.
+2. **For a person's decisions on an audit:** under **Answers**, each answered question and what it changed; under **Looked into**, each no-data item and what you found; under **Tracking**, each event stopped or folded and what changed; under **The note**, what you did about it.
+3. **Held back.** Each item with its open question.
+4. **Checks.** `validate` and `scan` results.
+5. **Verification.** Rounds run, findings applied, findings disputed and why.
 
 Questions offer options the person can pick in the Datalyze UI, with your recommendation. Never ask them to send you something, run something, or change a setting.

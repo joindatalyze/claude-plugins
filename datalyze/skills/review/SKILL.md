@@ -13,7 +13,7 @@ Review doesn't edit code or the plan. It writes a proposal; `implement` builds i
 
 Call the `knowledge` tool and read all five files. If the licence is inactive, say so in one line and stop.
 
-Read `.datalyze/context.md`, the plan (the `registry` tool), and the change: `git diff <base>...HEAD`, where the base is the one you were given, else the default branch. On a working tree with no branch, use `git diff HEAD` plus untracked files. Leave `.datalyze/` out of the change. A `_map/` folder in the registry is a tracking map an older Datalyze version wrote. It's out of date: never read it, search it or edit it, and leave it out of everything you write.
+Read `.datalyze/context.md`, `.datalyze/decisions.yaml` if it's there (the team's answers to audit questions: binding, and never asked again), the plan (the `registry` tool), and the change: `git diff <base>...HEAD`, where the base is the one you were given, else the default branch. On a working tree with no branch, use `git diff HEAD` plus untracked files. Leave `.datalyze/` out of the change. A `_map/` folder in the registry is a tracking map an older Datalyze version wrote. It's out of date: never read it, search it or edit it, and leave it out of everything you write.
 
 The proposal file is `.datalyze/proposals/pr-<n>.json` for pull request n, or `.datalyze/proposals/branch-<branch>.json` when there is no pull request yet (a laptop run; slashes in the branch name become `-`). If it already exists on the branch (the pull request was pushed again), read it first. Items `implement` already built are done; they aren't part of what you decide.
 
