@@ -35,7 +35,7 @@ No change, extend, modify, deprecate, new. Stop at the first that fits. A new ev
 - **A rename or deprecation** comes with its replacement event fully written in the same proposal, and a `dual_fire_until` date. A `replaced_by` pointing at an event nobody proposed can't be built.
 - **Legacy problems** the change doesn't touch aren't yours. Leave them to the audit.
 - **If the change already edits the plan correctly,** there is nothing to propose for that item. List it as checked.
-- **On a second run,** keep the reviewer's decisions, edits, notes and answers for every item whose target and code didn't change. Don't propose a rejected item again unless the change altered the reason it was rejected.
+- **On a second run,** keep the reviewer's decisions, edits, notes and answers for every item whose target and code didn't change, and keep the proposal's top-level `note` as it is. Don't propose a rejected item again unless the change altered the reason it was rejected.
 
 ## 4. Write the proposal and the report
 

@@ -15,7 +15,7 @@ A `_map/` folder in the registry is a tracking map an older Datalyze version wro
 
 Read `.datalyze/context.md` and `.datalyze/decisions.yaml` if it's there (the team's answers to earlier audit questions, binding), then what was approved:
 
-- **A proposal:** the pull request's proposal file on this branch (`.datalyze/proposals/pr-<n>.json`, or `branch-<branch>.json` on a laptop run), in the format in `../review/proposal-format.md` (from this skill's folder). Build the items marked approved. When the run comes from an `@datalyze apply` comment, every item not marked rejected counts as approved. The reviewer's edits to `proposed`, their notes and their answers to questions are binding. Rejected and undecided items are left alone.
+- **A proposal:** the pull request's proposal file on this branch (`.datalyze/proposals/pr-<n>.json`, or `branch-<branch>.json` on a laptop run), in the format in `../review/proposal-format.md` (from this skill's folder). Build the items marked approved. When the run comes from an `@datalyze apply` comment, every item not marked rejected counts as approved. The reviewer's edits to `proposed`, their notes and their answers to questions are binding. So is the proposal's top-level `note` ("Anything else"): do what it asks within tracking, and put what you can't do, or what reaches outside tracking, under Held back with why. Rejected and undecided items are left alone.
 - **A person's decisions on an audit:** `answers.json` next to the audit file (`audit.json` in the `.datalyze/` folder beside the registry), both on the audit branch: `git show origin/datalyze/audit:analytics/.datalyze/answers.json`. It holds, all for this one change, across every product area:
   - **`answers`:** the option the person picked for each of the audit's `questions`. The picked option's text is binding: build what it says, in the plan, the code, `_conventions.yaml` or `.datalyze/context.md`, wherever it lands. `option: null` is "Decide later": leave that question alone. Apply the answers first, since they can change the rules the fixes are written against.
   - **`findings`:** the finding ids to fix (below).
@@ -45,7 +45,7 @@ Run `validate` and `scan`, each with `base` set to the branch's base (the pull r
 
 ## 4. Have the verifier check it
 
-Give the `verifier` agent the code diff, the registry diff (`git diff <base> -- analytics/`), and the decisions already made: the approved targets with the reviewer's notes and answers (for an audit, the finding ids and titles, each answered question with the picked option's text, the no-data items looked into, each event's tracking choice, and the person's note). Not your reasoning, not the proposal's summaries, not this conversation: its value is that it comes to the change cold. It reads the knowledge itself. Wait for its answer before you go on: never start the verifier, or any subagent, in the background. Your run ends when you stop, so a round still running when you stop is lost, and so is the report.
+Give the `verifier` agent the code diff, the registry diff (`git diff <base> -- analytics/`), and the decisions already made: the approved targets with the reviewer's notes and answers and the proposal's top-level note (for an audit, the finding ids and titles, each answered question with the picked option's text, the no-data items looked into, each event's tracking choice, and the person's note). Not your reasoning, not the proposal's summaries, not this conversation: its value is that it comes to the change cold. It reads the knowledge itself. Wait for its answer before you go on: never start the verifier, or any subagent, in the background. Your run ends when you stop, so a round still running when you stop is lost, and so is the report.
 
 Apply its blockers and fixes, and run the checks again. When you disagree with one, keep the finding and write why in the report. At most two verifier rounds. A blocker or fix still open after that, disputed or not, becomes an open question on its item.
 
@@ -68,7 +68,7 @@ Mark each built item `"implemented": true` in the proposal file as soon as it's 
 Then:
 
 1. **What changed.** One line per item, in plain words, with the files.
-2. **For a person's decisions on an audit:** under **Answers**, each answered question and what it changed; under **Looked into**, each no-data item and what you found; under **Tracking**, each event stopped or folded and what changed; under **The note**, what you did about it.
+2. **For a person's decisions on an audit:** under **Answers**, each answered question and what it changed; under **Looked into**, each no-data item and what you found; under **Tracking**, each event stopped or folded and what changed; under **The note**, what you did about it. For a proposal with a top-level `note`, the same **The note** line.
 3. **Held back.** Each item with its open question.
 4. **Checks.** `validate` and `scan` results.
 5. **Verification.** Rounds run, findings applied, findings disputed and why.

@@ -65,6 +65,6 @@
 
 ## What the reviewer adds
 
-The UI or the action writes `approved_by` (the approver's GitHub login) when the proposal is approved. The person reviewing may, per item, set `"decision": "approved" | "rejected"`, edit `proposed`, and add a `"note"`. Per question they set `"answer"` (an option's index or their own text). All of it is binding on `implement`.
+The UI or the action writes `approved_by` (the approver's GitHub login) when the proposal is approved. The person reviewing may, per item, set `"decision": "approved" | "rejected"`, edit `proposed`, and add a `"note"`. Per question they set `"answer"` (an option's index or their own text). At the top level they may add a `"note"`: anything else they want done that no item or question covers, in their words. All of it is binding on `implement`. Never write either `note` yourself.
 
 `implement` builds items marked approved. When the run comes from an `@datalyze apply` comment, every item not marked rejected counts as approved, and every answered question is binding.
