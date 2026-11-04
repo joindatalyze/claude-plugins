@@ -24,6 +24,10 @@ Read `.datalyze/context.md` and `.datalyze/decisions.yaml` if it's there (the te
   - **`note`:** anything else the person wants done, in their words. Binding, like a reviewer's note. Do what it asks within tracking; what you can't do, or what reaches outside tracking, goes under Held back with why.
 - **Audit findings:** the finding ids you were given, in the audit file. When it isn't on this branch, read it from the audit branch: `git show origin/datalyze/audit:analytics/.datalyze/audit.json`. For each finding, find why in the code and the data, and decide the smallest change that makes the plan, the code and the data agree: fix the call when the code is wrong, update the plan when the data shows the plan is stale. Don't add events beyond what the fix needs. A fix to an existing event follows the breaking-change protocol. Every picked finding goes into this one change, whatever its area.
 
+**The audit fix's work list:** `.datalyze/fixes/audit-<date>.json` on the fix branch (the prompt names it). The Datalyze action writes it before you start, one item per thing the person asked for: `Q1` (an answered question), `F3` (a finding), `look:<name>`, `tracking:<event>`, `note`. Build only the items whose `state` is `todo`; one that's `done` was built by an earlier run on this branch and is already in the code. As you finish each item, set its `state` to `done` with a one-line `summary` of what changed, or to `held_back` with a `question` (`{ "text", "options": [two or more], "recommended": <index> }`) the person answers on the audit screen. A held-back item whose `question` has an `answer` is the person's decision: build it. Change nothing else in the file: the items, their titles and what was asked are the person's. Update it as you go, not at the end, so a run that stops part-way still says what it finished.
+
+**Carrying on:** when the prompt says Datalyze already built part of this on the branch, the earlier run's work is in the code and the plan. Read the branch's diff against the base first (`git diff <base>`), don't redo what's there, and build what's left. The same goes for a second pass in the same run: the first pass's work is in the working tree.
+
 ## 2. Change the plan and the calls
 
 - **The plan:** write each item into its area file under the registry, with a changelog line (date, the pull request or the branch, what changed). A new property name goes into `_properties.yaml`.
@@ -51,7 +55,7 @@ Keep every item that passed the checks and the verifier. Hold back only the item
 
 When the run built from a proposal, also add each held-back item's question to the proposal file's `questions`, with `item` set to its id, the options and your `recommended` (format in `../review/proposal-format.md`). That is where the Datalyze UI shows it and the person answers; the next run builds from the answer.
 
-Mark each built item `"implemented": true` in the proposal file, so a later review knows it is done. Leave all edits in the working tree; the Datalyze action commits them with its own token, so the team's CI runs on them.
+Mark each built item `"implemented": true` in the proposal file as soon as it's built and checked, so a later review, or a run that carries on after this one stops, knows it is done. Leave all edits in the working tree; the Datalyze action commits them with its own token, so the team's CI runs on them.
 
 ## 6. Write the report
 
