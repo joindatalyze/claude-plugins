@@ -33,7 +33,26 @@
       "evidence": [{ "code": "app/reports/toolbar.tsx:41", "quote": "<Button onClick={onExport}>Export</Button>" }]
     }
   ],
-  "checked": [{ "name": "report_viewed", "why": "Still fires on the report page load; the toolbar doesn't change it." }],
+  "checked": [
+    {
+      "name": "report_viewed",
+      "why": "Still fires on the report page load; the toolbar doesn't change it.",
+      "tier": "core",
+      "calls": [{ "code": "app/reports/page.tsx:22", "quote": "useEffect(() => track('report_viewed', { report_id }), [report_id])" }],
+      "checks": {
+        "fires":           { "result": "ok", "data": { "query": "counts_1" }, "why": "310 in 30 days." },
+        "moment":          { "result": "ok", "why": "In an effect keyed on report_id, after the report loads." },
+        "paths":           { "result": "ok", "why": "The one report page; the toolbar opens no other view." },
+        "once":            { "result": "ok", "why": "useEffect [report_id], a string: once per report." },
+        "name_accurate":   { "result": "ok", "why": "The report is on screen when it fires." },
+        "name_clear":      { "result": "ok" },
+        "properties":      { "result": "ok", "why": "report_id, as planned." },
+        "values_filled":   { "result": "problem", "item": "p2", "data": { "query": "sample" }, "why": "report_id is null on 12% of rows: the shared-link route renders before params resolve." },
+        "values_sensible": { "result": "ok", "why": "rpt_ ids, as the API returns." },
+        "could_carry":     { "result": "ok", "why": "No value at the call site answers a new question." }
+      }
+    }
+  ],
   "questions": [
     {
       "id": "q1",
@@ -61,10 +80,12 @@
 - **`breaking: true`** for anything that changes what past data means. A changed firing moment's `changelog` starts with `SEMANTICS:`.
 - **`evidence`:** at least one `{ "code", "quote" }` with the line quoted exactly, or `{ "data": { "tool", "query", "result" } }`.
 - **`budget_reason`:** on each new event past the budget.
-- **`questions`:** each offers options the person can pick in the UI, with `recommended` the index of yours. `item` links it to an item, or is null.
+- **`questions`:** each offers options the person can pick in the UI, with `recommended` the index of yours. `item` links it to an item, or is null. A C10 property suggestion ("Add `coupon_applied` to `checkout_completed`?") has `"suggestion": true`: at most two per event, never one `decisions.yaml` skipped.
+- **`checked`:** a card for every event the change reaches, problems or not, in the audit's card format (`../audit/audit-format.md`, "Cards"), with `name` and `why` (one line, as before) on top. Every `problem` names the item that fixes it (`item`) or says why there is none (`not_an_item`).
+- **`existing: true`:** an item for a problem that was there before this change (true on the merge-base, or seen in today's data). Written in full like any item, so it can be built. It never holds the status, `@datalyze apply` doesn't approve it, and the reviewer picks Fix in this PR or Leave for the audit. Never write `decision` on it yourself.
 
 ## What the reviewer adds
 
 The UI or the action writes `approved_by` (the approver's GitHub login) when the proposal is approved. The person reviewing may, per item, set `"decision": "approved" | "rejected"`, edit `proposed`, and add a `"note"`. Per question they set `"answer"` (an option's index or their own text). At the top level they may add a `"note"`: anything else they want done that no item or question covers, in their words. All of it is binding on `implement`. Never write either `note` yourself.
 
-`implement` builds items marked approved. When the run comes from an `@datalyze apply` comment, every item not marked rejected counts as approved, and every answered question is binding.
+`implement` builds items marked approved. When the run comes from an `@datalyze apply` comment, every item not marked rejected counts as approved, except `existing` items, and every answered question is binding. An `existing` item is approved only by Fix in this PR in the UI, which writes `decision: approved` with `decided_by`.

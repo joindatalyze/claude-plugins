@@ -2,6 +2,11 @@
 
 `audit.json` sits in a `.datalyze/` folder beside the registry folder (`analytics/.datalyze/audit.json` for the default `analytics/registry`), with `audit.md` next to it. The Datalyze UI's audit screen reads it; `check_audit` checks it, and when the check and this page disagree, the check is right.
 
+**You never write `audit.json` by hand.** You write two kinds of working file in `.datalyze/cache/cards/` (never committed), and `assemble_audit` builds `audit.json` from them, `match`'s items and the snapshot:
+
+- **`<area>.json`, one per area** (at most 25 events; `checkout-1.json`, `checkout-2.json` for a bigger one; `unplanned.json` for events not in the plan): `{ "area": "checkout", "events": [ cards ], "property_suggestions": [ suggestions ] }`. Suggestion ids only need to be unique in their file: `assemble_audit` numbers them S1, S2... across the audit.
+- **`_audit.json`, one:** everything else in the example below except `items`, `health`, `snapshot_source`, `events` and `property_suggestions`, which the tool fills in. It adds `not_findings` (below), and `incomplete_areas` when the run must stop with areas left.
+
 ```json
 {
   "kind": "install",
@@ -21,9 +26,40 @@
         { "code": "app/checkout/pay-button.tsx:58", "quote": "track('checkout_completed', { order_id })" },
         { "query": "q1" }
       ],
-      "fix": "Send checkout_completed from the order handler after the provider confirms, with status and failure_reason. Breaking: SEMANTICS changelog line."
+      "fix": "Send checkout_completed from the order handler after the provider confirms, with status and failure_reason. Breaking: SEMANTICS changelog line.",
+      "checks": ["checkout_completed.moment", "checkout_completed.name_accurate"]
     }
   ],
+  "not_findings": [
+    { "check": "refund_issued.values_filled", "reason": "The verifier found the null rows are test refunds from the admin tool, which the plan excludes." }
+  ],
+  "events": [
+    {
+      "name": "checkout_completed",
+      "tier": "money",
+      "area": "checkout",
+      "calls": [{ "code": "app/checkout/pay-button.tsx:58", "quote": "track('checkout_completed', { order_id })" }],
+      "checks": {
+        "fires":           { "result": "ok", "data": { "query": "counts_1" }, "why": "Arrives daily; 1,240 in the window." },
+        "moment":          { "result": "problem", "finding": "F1", "why": "Sent on the Pay click, before createOrder resolves.", "evidence": [{ "code": "app/checkout/pay-button.tsx:58", "quote": "track('checkout_completed', { order_id })" }] },
+        "paths":           { "result": "ok", "why": "Only the pay button places orders; the API has no other caller." },
+        "once":            { "result": "ok", "why": "A single onClick call; duplicate_rate 0.002." },
+        "name_accurate":   { "result": "problem", "finding": "F1", "why": "Nothing is completed when it fires.", "evidence": [{ "code": "app/checkout/pay-button.tsx:58", "quote": "track('checkout_completed', { order_id })" }] },
+        "name_clear":      { "result": "ok" },
+        "properties":      { "result": "ok", "why": "order_id on the one call." },
+        "values_filled":   { "result": "ok", "data": { "query": "sample" }, "why": "order_id comes from the cart; null rate 0." },
+        "values_sensible": { "result": "ok", "why": "order_id matches the ord_ shape the cart makes." },
+        "could_carry":     { "result": "suggestion", "why": "coupon is in scope at the call.", "suggestions": ["S1"] }
+      },
+      "properties": [{ "name": "order_id", "fill_rate": 1, "null_rate": 0, "empty_rate": 0, "top_values": ["ord_k29x8w1m"] }]
+    }
+  ],
+  "property_suggestions": [
+    { "id": "S1", "event": "checkout_completed", "property": "coupon_applied", "type": "boolean",
+      "question": "Do coupons change how many checkouts complete?",
+      "evidence": [{ "code": "app/checkout/pay-button.tsx:41", "quote": "const { coupon } = useCart()" }] }
+  ],
+  "incomplete_areas": [],
   "questions": [
     {
       "id": "Q1",
@@ -70,4 +106,13 @@
 - **`questions`:** every open question in `audit.md`, empty when there are none. Option ids are short (`a`, `b`, `c`) and each option's `text` reads on its own, because it is what's recorded when the person picks it. `recommended` is an option id, or null when you don't recommend one. `findings` (optional) names the findings it bears on.
 - **`no_data`:** every item with no data in the window that isn't a finding, with the reason, empty when there are none. The person can ask the fix run to look into any of them.
 - **`drop_candidates`:** every live event that breaks a "what not to track" rule, empty when there are none. `name` is an event in `items`, spelled as `match` spells it. `recommended` is `keep`, `drop` or `fold`; `fold` needs `fold_into` (`<event>.<property>`), and the person can only pick Fold when it's there. `volume` is left out when there was no data. `evidence` has the track call. A Keep the person picks goes into `decisions.yaml` with the event's name, so it isn't listed again.
+- **Cards (`events`):** one per event in scope: every live event, every planned event (`not_implemented`: only `fires`), and every event the data or the code has that the plan doesn't. `name` as `match` spells it. `tier`: `core`, `money`, `onboarding`, `identity`, `funnel` or `other`. `calls`: every call site, quoted. `checks`: the ten, keyed `fires`, `moment`, `paths`, `once`, `name_accurate`, `name_clear`, `properties`, `values_filled`, `values_sensible`, `could_carry` (`knowledge/event-check.md`), each with `result` `ok`, `problem`, `suggestion` (could_carry only) or `not_measured`:
+  - `problem`: `evidence` (`{ code, quote }` or `{ query }`) or `data` (`{ query }`), and covered by a finding's `checks` or listed in `not_findings` (`assemble_audit` writes `finding` or `not_a_finding` onto the check from those).
+  - `ok`: a `why` saying what was checked, on every tier but `other` (`name_clear` may go without).
+  - `not_measured`: a `why` (no data, too few rows, no keys).
+  - Data-based results cite a query id from the snapshot's `queries`; with no snapshot, every result is code-only or `not_measured`.
+  - `could_carry` with `suggestion` lists at most two `suggestions` ids, only on tiers other than `other`.
+  - `properties` is filled in by `assemble_audit` from the snapshot. Evidence whose quote isn't in the code drops that one check to `not_measured`, with a `note` saying so.
+- **`property_suggestions`:** C10. Each names its card's `event`, the `property`, its `type`, the `question` it answers and `evidence`: the value already at the call site. Never one `decisions.yaml` skipped (`property: <event>.<name>`, `decision: skip`). The person picks Add (built by the fix run as an extend) or Skip (recorded in `decisions.yaml`).
+- **`incomplete_areas`:** `{ area, reason }` for each area with no cards when the run had to stop. The audit is published without them, and the screen says which are missing. An event with no card fails the check unless its area is listed.
 - **Findings:** the title starts with the event or property name. Every finding has evidence. Its `fix` says what changes, and for an existing event, how it goes through deprecate, `replaced_by` and a dual-fire window.

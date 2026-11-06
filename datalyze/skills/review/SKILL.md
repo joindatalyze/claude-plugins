@@ -11,21 +11,30 @@ Review doesn't edit code or the plan. It writes a proposal; `implement` builds i
 
 ## 1. Get the knowledge and the change
 
-Call the `knowledge` tool and read all five files. If the licence is inactive, say so in one line and stop.
+Call the `knowledge` tool and read all six files. If the licence is inactive, say so in one line and stop.
 
-Read `.datalyze/context.md`, `.datalyze/decisions.yaml` if it's there (the team's answers to audit questions: binding, and never asked again), the plan (the `registry` tool), and the change: `git diff <base>...HEAD`, where the base is the one you were given, else the default branch. On a working tree with no branch, use `git diff HEAD` plus untracked files. Leave `.datalyze/` out of the change. A `_map/` folder in the registry is a tracking map an older Datalyze version wrote. It's out of date: never read it, search it or edit it, and leave it out of everything you write.
+Read `.datalyze/context.md`, `.datalyze/decisions.yaml` if it's there (the team's answers to audit questions and skipped suggestions: binding, and never asked again), the plan (the `registry` tool), and the change: `git diff <base>...HEAD`, where the base is the one you were given, else the default branch. On a working tree with no branch, use `git diff HEAD` plus untracked files. Leave `.datalyze/` out of the change. A `_map/` folder in the registry is a tracking map an older Datalyze version wrote. It's out of date: never read it, search it or edit it, and leave it out of everything you write.
 
 The proposal file is `.datalyze/proposals/pr-<n>.json` for pull request n, or `.datalyze/proposals/branch-<branch>.json` when there is no pull request yet (a laptop run; slashes in the branch name become `-`). If it already exists on the branch (the pull request was pushed again), read it first. Items `implement` already built are done; they aren't part of what you decide.
 
 If the change is empty, or touches nothing but `.datalyze/`, write a `no_change` proposal saying so, and stop.
 
-## 2. Map before deciding
+## 2. Map and check before deciding
 
-Write nothing yet. First work out:
+Write nothing yet. Go end to end, as `event-check.md` says:
 
+- **Every tracking call** the change can touch: run `scan` (each JS or TS call comes with its `within`, `component`, `trigger` and `after`), then read the code around each call.
 - **What the change does for users,** in product terms: "reports can be exported from a toolbar", "coupon checks moved to the server". Skip refactors, styling, copy, tests and tooling, or say "no user-facing change" when that's the truth.
-- **Every existing event, user property and identify or reset call it can reach,** by the five steps in `datalyze-method.md`, and for each one, how the change affects it, walking the checklist in `good-vs-bad.md`. Use `scan` and read the code around each call.
-- **What the data says,** when keys exist: before deprecating an event, check with `snapshot` that it doesn't still arrive from another platform; before adding an enum value, check the format the data already uses.
+- **Every existing event, user property and identify or reset call it can reach,** by the five steps in `datalyze-method.md`. For each event, map it: its call sites, what triggers it, its side, where each property's value comes from, its funnel, its tier, and the places the action happens that don't send it.
+- **The event check on every reached event, C1 to C10, from the code.** One card each (`proposal-format.md`, `checked`), problems or not. Assume it misfires until the code shows it doesn't. Walk `good-vs-bad.md`'s checklist for how the change affects it.
+- **Then the data, on every pull request that reaches an event, when keys exist:** `snapshot` with `events` set to the reached events, then `match` with the same `events`. That says, for each reached event today, before the change ships, whether it arrives and whether its values are filled and sensible. Fill each card's data side from it. Without keys or a connection, the data side is `not_measured`. A rate-limited snapshot leaves it `not_measured` too; say so in the report.
+
+**Caused by the change, or already there.** Split each card's problems in two:
+
+- **Caused by this change** (it moved the call, added a path without it, made a value nullable, changed a type): these become proposal items as below, and they decide the status. A change that makes a value nullable (a new optional chain, a value now read before it loads) is caught on the code side of C8 and is a change item, even though the data can't show it yet.
+- **Already there** (true on the base too): `existing` items, written in full like any item so they can be built, with `"existing": true`. They never fail the status; the reviewer picks Fix in this PR or Leave for the audit. To tell the two apart, run the code checks on the base's version of each call (`git show $(git merge-base <base> HEAD):<file>`). A problem the data shows (a null rate today) is always already there: the change hasn't shipped.
+
+**Could carry more:** on reached core, money, onboarding, identity and funnel events, at most two C10 suggestions each, as proposal questions ("Add `coupon_applied` to `checkout_completed`?"), each with its question and the value at the call site. Skip any `decisions.yaml` already skipped.
 
 ## 3. Decide each item, in this order
 
@@ -33,7 +42,7 @@ No change, extend, modify, deprecate, new. Stop at the first that fits. A new ev
 
 - **A new thing a person can do** (an export button, a new way to share) gets an item or a visible question with your recommendation. Never a buried note.
 - **A rename or deprecation** comes with its replacement event fully written in the same proposal, and a `dual_fire_until` date. A `replaced_by` pointing at an event nobody proposed can't be built.
-- **Legacy problems** the change doesn't touch aren't yours. Leave them to the audit.
+- **Legacy problems** outside the reached events aren't yours. Leave them to the audit. Inside the reached events, they are `existing` items (step 2).
 - **If the change already edits the plan correctly,** there is nothing to propose for that item. List it as checked.
 - **On a second run,** keep the reviewer's decisions, edits, notes and answers for every item whose target and code didn't change, and keep the proposal's top-level `note` as it is. Don't propose a rejected item again unless the change altered the reason it was rejected.
 
@@ -45,8 +54,9 @@ No change, extend, modify, deprecate, new. Stop at the first that fits. A new ev
 
 1. **Verdict.** One line: `No tracking change needed`, or what the proposal changes and asks.
 2. **Changes.** Per item: the event, the kind of change, breaking or not, the question it answers.
-3. **Existing events checked.** Only events the change reaches, each with why it is unaffected. No unrelated events.
-4. **Breaking changes.** What each affects and the migration (`replaced_by`, dual-fire date).
-5. **Open questions.** Each with options the person can pick in the Datalyze UI and your recommendation. Never ask them to send you something, run something, or change a setting ("send that excerpt", "raise the budget").
+3. **Existing events checked.** A short table of the events the change reaches: the event, then ✓ (ok), ✗ (problem), ◦ (suggestion) or – (not measured) for each of the ten checks, and one line under it for each ✗. Every event with a ✗ in full; past 20 events, count the rest ("41 more events checked, no problems: see Datalyze"). No unrelated events.
+4. **Already wrong in events this change touches.** Each `existing` item: what's wrong, the evidence, and that the reviewer can fix it in this pull request or leave it for the audit. It doesn't block the merge.
+5. **Breaking changes.** What each affects and the migration (`replaced_by`, dual-fire date).
+6. **Open questions.** Each with options the person can pick in the Datalyze UI and your recommendation. Never ask them to send you something, run something, or change a setting ("send that excerpt", "raise the budget").
 
 Then stop.
