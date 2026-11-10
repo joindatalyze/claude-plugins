@@ -1,6 +1,6 @@
 {
   "name": "datalyze",
-  "version": "2.0.0-dev.16",
+  "version": "2.0.0-dev.21",
   "description": "Datalyze Tracking Agent: audits your analytics tracking, decides what each change needs, and builds approved tracking changes, with Datalyze's tracking knowledge.",
   "author": { "name": "Datalyze", "email": "ansh@joindatalyze.com", "url": "https://www.joindatalyze.com" },
   "homepage": "https://www.joindatalyze.com/tracking-agent",

@@ -48,11 +48,11 @@ Run `validate` and `scan`, each with `base` set to the branch's base (the pull r
 
 Give the `verifier` agent the code diff, the registry diff (`git diff <base> -- analytics/`), the proposal file's path when there is one (it checks the `checked` cards), and the decisions already made: the approved targets with the reviewer's notes and answers and the proposal's top-level note (for an audit, the finding ids and titles, each answered question with the picked option's text, the property suggestions added, the no-data items looked into, each event's tracking choice, and the person's note). Not your reasoning, not the proposal's summaries, not this conversation: its value is that it comes to the change cold. It reads the knowledge itself. Wait for its answer before you go on: never start the verifier, or any subagent, in the background. Your run ends when you stop, so a round still running when you stop is lost, and so is the report.
 
-Apply its blockers and fixes, and run the checks again. When you disagree with one, keep the finding and write why in the report. At most two verifier rounds. A blocker or fix still open after that, disputed or not, becomes an open question on its item.
+The verifier records its own result with its `verdict` tool; never call that tool yourself. Without it the build isn't counted as verified. Apply its blockers and fixes, and run the checks again. When you disagree with one, keep the finding and write why in the report. At most two verifier rounds. A blocker or fix still open after that, disputed or not, becomes an open question on its item.
 
 ## 5. Keep every verified item
 
-Keep every item that passed the checks and the verifier. Hold back only the items with open questions: undo their edits in the plan and the code, and list them in the report with the question. One bad item never loses the rest.
+Only mark an item built (`implemented: true`, or `done` in a work list) when the code sends it: after the run, the action scans the code, and an event that isn't sent, or is sent without its planned properties, goes back to not built with the reason. Keep every item that passed the checks and the verifier. Hold back only the items with open questions: undo their edits in the plan and the code, and list them in the report with the question. One bad item never loses the rest.
 
 When the run built from a proposal, also add each held-back item's question to the proposal file's `questions`, with `item` set to its id, the options and your `recommended` (format in `../review/proposal-format.md`). That is where the Datalyze UI shows it and the person answers; the next run builds from the answer.
 

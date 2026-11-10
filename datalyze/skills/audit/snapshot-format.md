@@ -17,6 +17,7 @@ What the analytics tool received, in one JSON file whatever the tool. The `snaps
       "name": "post_created",
       "volume": 1240,
       "daily": [40, 38, 45],
+      "libraries": { "python": 0.75, "node": 0.25 },
       "platforms": { "web": 1100, "ios": 140 },
       "sample_n": 500,
       "properties_complete": true,
@@ -75,3 +76,9 @@ What the analytics tool received, in one JSON file whatever the tool. The `snaps
 - **User properties:** `user_properties_complete: true` only when the list holds every property on the sampled profiles. Leave `user_properties` out entirely if you didn't collect them; they are then "not measured", not broken.
 - **Vendor properties are left out:** names starting with `$` or `mp_`, plus `time`, `distinct_id` and `token`.
 - **Production only** when the team names an environment property: record it in `environment` (`property`, `values`, `method`: `filtered` or `scaled`) with `excluded_share`.
+
+## From the full pull
+
+The `snapshot` tool with `audit: true` on Mixpanel or PostHog reads every record of the last 30 days and adds what only a full pull has; never write these fields by hand. `pull` marks it: `records`, `sampled` (events capped per day to fit in 3 hours, and the cap), `days_not_measured`, `counts_error` and `profiles_error` when those failed, and `sessions` (page views and sessions on web records). Each event has `days` and `daily_status` (`complete`, `sampled`, `not_measured`) beside `daily`, and `double_firing` (`records`, `exact`, `rapid`, `precision`). Each property has `daily` (records, filled, blank per day; null when not measured), `value_shares` (each value's share per day, for 15 values or fewer), `type_counts`, `type_detail` and `top_counts`. `identity` adds `bad_ids`, `shared_ids`, `before_login` and `ids_per_person`. A day `not_measured` is unknown: never read its 0 in `daily` as nothing arriving.
+
+`data_query` adds to `queries` as it runs, never by hand: each of its queries as `dq1`, `dq2`, ... with `answer`, the rows it returned (`columns`, `rows`, `row_count`, `truncated`, `withheld`: personal values left out) or `{ "error": ... }` when it didn't run. `check_audit` holds a finding's numbers to the answers it cites.

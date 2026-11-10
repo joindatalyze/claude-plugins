@@ -5,7 +5,7 @@
 **You never write `audit.json` by hand.** You write two kinds of working file in `.datalyze/cache/cards/` (never committed), and `assemble_audit` builds `audit.json` from them, `match`'s items and the snapshot:
 
 - **`<area>.json`, one per area** (at most 25 events; `checkout-1.json`, `checkout-2.json` for a bigger one; `unplanned.json` for events not in the plan): `{ "area": "checkout", "events": [ cards ], "property_suggestions": [ suggestions ] }`. Suggestion ids only need to be unique in their file: `assemble_audit` numbers them S1, S2... across the audit.
-- **`_audit.json`, one:** everything else in the example below except `items`, `health`, `snapshot_source`, `events` and `property_suggestions`, which the tool fills in. It adds `not_findings` (below), and `incomplete_areas` when the run must stop with areas left.
+- **`_audit.json`, one:** everything else in the example below except `items`, `health`, `snapshot_source`, `events` and `property_suggestions`, which the tool fills in. It adds `not_findings` (below), `dismissed` (the findings the verifier disproved), and `incomplete_areas` when the run must stop with areas left.
 
 ```json
 {
@@ -60,6 +60,9 @@
       "evidence": [{ "code": "app/checkout/pay-button.tsx:41", "quote": "const { coupon } = useCart()" }] }
   ],
   "incomplete_areas": [],
+  "dismissed": [
+    { "title": "signup_completed stopped arriving on 28 Oct", "reason": "The verifier found it arrives from the auth service since the 28 Oct release; the query read only the web project.", "items": ["signup_completed"] }
+  ],
   "questions": [
     {
       "id": "Q1",
@@ -110,9 +113,13 @@
   - `problem`: `evidence` (`{ code, quote }` or `{ query }`) or `data` (`{ query }`), and covered by a finding's `checks` or listed in `not_findings` (`assemble_audit` writes `finding` or `not_a_finding` onto the check from those).
   - `ok`: a `why` saying what was checked, on every tier but `other` (`name_clear` may go without).
   - `not_measured`: a `why` (no data, too few rows, no keys).
-  - Data-based results cite a query id from the snapshot's `queries`; with no snapshot, every result is code-only or `not_measured`.
+  - Data-based results cite a query id from the snapshot's `queries` (a `data_query` answer is `dq1`, `dq2`, ...); with no snapshot, every result is code-only or `not_measured`. On a full pull's snapshot, every data number in a check's `why` must be in the answer it cites or in the snapshot's and `match`'s figures for its event; `assemble_audit` says which isn't.
   - `could_carry` with `suggestion` lists at most two `suggestions` ids, only on tiers other than `other`.
+  - **`match`'s warnings stand.** The screen shows each item's `checks` on its own row under the event, as `match` wrote them. A check whose warning `match` raised (`property_null` on `values_filled`, `double_firing` on `once`: the table in `event-check.md`) can't be `ok` unless the card explains the warning in `warning_notes`: `[{ "warning": "property_null.coupon", "note": "Expected: blank means no coupon." }]`, the id being the warning's `kind`, then `.` and its `property` when it has one. The note shows beside the warning; it never hides it. `assemble_audit` refuses an `ok` without one, and a note on a warning `match` didn't raise.
   - `properties` is filled in by `assemble_audit` from the snapshot. Evidence whose quote isn't in the code drops that one check to `not_measured`, with a `note` saying so.
 - **`property_suggestions`:** C10. Each names its card's `event`, the `property`, its `type`, the `question` it answers and `evidence`: the value already at the call site. Never one `decisions.yaml` skipped (`property: <event>.<name>`, `decision: skip`). The person picks Add (built by the fix run as an extend) or Skip (recorded in `decisions.yaml`).
+- **`not_read`:** written by `assemble_audit`, never by you: the code files in languages the scan doesn't open, by language and top folder. Say in `audit.md`'s "what couldn't be seen" that events sent from there aren't checked.
+- **`dismissed`:** every draft finding the verifier disproved: its `title`, the verifier's `reason`, and the `items` it was about. The screen lists them, folded, under "Dismissed by the verifier", so nothing is dropped without a trace.
 - **`incomplete_areas`:** `{ area, reason }` for each area with no cards when the run had to stop. The audit is published without them, and the screen says which are missing. An event with no card fails the check unless its area is listed.
-- **Findings:** the title starts with the event or property name. Every finding has evidence. Its `fix` says what changes, and for an existing event, how it goes through deprecate, `replaced_by` and a dual-fire window.
+- **`began`** (optional, yyyy-mm-dd): on a finding about a change in the data, the day it began, copied from the `began` of a check on one of its items. `check_audit` refuses any other day. The audit screen shows it after the title ("from 4 Nov").
+- **Findings:** the title starts with the event or property name. Every finding has evidence: `{ code, quote }` for the code, `{ query }` for the data (a snapshot query id, or a `data_query` answer, `dq1`). Every data number in its title and explanation must be in an answer it cites or in its items' figures; `check_audit` says which number isn't, and which `dq` answer holds it when the finding doesn't cite it. Its `fix` says what changes, and for an existing event, how it goes through deprecate, `replaced_by` and a dual-fire window.

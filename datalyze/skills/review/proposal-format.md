@@ -7,7 +7,8 @@
   "version": 1,
   "pr": 412,
   "base": "origin/main",
-  "head": "4f2c9a1",
+  "head": "4f2c9a1d7e0b3c55a1f2e9d8c7b6a5f4e3d2c1b0",
+  "run": "11893312077-1",
   "verdict": "changes_proposed",
   "summary": "Adds an export button to the reports page.",
   "items": [
@@ -66,6 +67,7 @@
 ```
 
 - **`pr`:** the pull request number, or null on a laptop run.
+- **`head` and `run`:** the commit and the run the prompt names ("for head … and run …"), copied exactly. Write them on every run, even when the rest of the file is unchanged: a proposal with another run's `run` or another commit's `head` doesn't count, and the pull request stays red. On a laptop run, `head` is the branch's head commit and `run` is left out.
 - **`verdict`:** `no_change` only when there are no items and no questions. Anything else is `changes_proposed`, so a question is never hidden behind "no change needed".
 - **`kind`:** `event`, `event_property`, `user_property`, `super_property` or `identity`.
 - **`action`:** `add`, `extend`, `modify` or `deprecate`.
@@ -81,8 +83,12 @@
 - **`evidence`:** at least one `{ "code", "quote" }` with the line quoted exactly, or `{ "data": { "tool", "query", "result" } }`.
 - **`budget_reason`:** on each new event past the budget.
 - **`questions`:** each offers options the person can pick in the UI, with `recommended` the index of yours. `item` links it to an item, or is null. A C10 property suggestion ("Add `coupon_applied` to `checkout_completed`?") has `"suggestion": true`: at most two per event, never one `decisions.yaml` skipped.
-- **`checked`:** a card for every event the change reaches, problems or not, in the audit's card format (`../audit/audit-format.md`, "Cards"), with `name` and `why` (one line, as before) on top. Every `problem` names the item that fixes it (`item`) or says why there is none (`not_an_item`).
+- **`checked`:** every event `reach` lists, and any other the change reaches. An event the change leaves alone (a shared helper changed, its call untouched) can be `{ "name", "why", "unaffected": true }`, with `why` saying what you checked. Otherwise, a card for every event the change reaches, problems or not, in the audit's card format (`../audit/audit-format.md`, "Cards"), with `name` and `why` (one line, as before) on top. Every `problem` names the item that fixes it (`item`) or says why there is none (`not_an_item`).
 - **`existing: true`:** an item for a problem that was there before this change (true on the merge-base, or seen in today's data). Written in full like any item, so it can be built. It never holds the status, `@datalyze apply` doesn't approve it, and the reviewer picks Fix in this PR or Leave for the audit. Never write `decision` on it yourself.
+
+## What Datalyze adds
+
+On a pull request, the action writes `from_audit`: what the latest audit on `datalyze/audit` found on the events the change reaches (`{ audited_at, events: [{ name, bucket, warnings, findings }], clean, not_in_audit }`). The review screen and the pull request comment show it. Never write it yourself: one you wrote is replaced.
 
 ## What the reviewer adds
 
