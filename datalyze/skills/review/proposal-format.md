@@ -73,7 +73,7 @@
 - **`action`:** `add`, `extend`, `modify` or `deprecate`.
 - **`target`:** the name as it is in the plan at the base: an event (`checkout_started`), an event property (`checkout_started.coupon_code`), a user or super property (`plan_tier`), or `identify`, `alias` or `reset`. An item the change deleted from the plan is named as it was on the base. A new event names its `area` (the registry file, without `.yaml`).
 - **`proposed`:** the complete entry after the change, in registry format, with real example values. A new event carries its `question`. Every field the item doesn't change is copied from the plan word for word.
-  - Event property: `{ "type", "example", "required", "description" }`.
+  - Event property: `{ "type", "example", "only_when", "description" }`. `only_when` only when the property applies on some paths, with when, from the code (`status=failed`, or in words); left out, it's sent and filled on every path. Never `required: false`, or `null` or `""` in `example`, for "sometimes missing".
   - User property: `{ "type", "example", "operation", "set_via", "set_when", "source", "question", "pii" }`.
   - Super property: `{ "type", "example", "set_when", "set_via" }`.
   - `set_via` is one side (`"server"`), or every side that writes it (`["client", "server"]`), as the plan has it.

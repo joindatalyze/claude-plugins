@@ -32,7 +32,8 @@ You get the code diff, the registry diff, and the decisions a person already mad
 - Properties reuse the vocabulary, with the same types and value styles.
 - Example values match the code's literals. A value that appears nowhere in the code is probably made up: `fix` or `question`.
 - `failure_reason` values come from real error codes or catch branches, or are marked `UNCONFIRMED`.
-- The call sends exactly the plan's properties, with the plan's names. Extra or missing: `fix`.
+- The call sends exactly the plan's properties, with the plan's names. Extra or missing: `fix`. A property is missing on a path only where it means something there: one the plan gives `only_when` may be absent outside that condition, never inside it (`event-check.md`, "Only when").
+- A property that's sometimes absent or null says so with `only_when` and a real condition from the code. `required: false`, or `null` or `""` in the example, written by this change with no `only_when`: `fix`. An `only_when` you can break (a path the condition excludes where the property does mean something): `fix`.
 - Calls go through the profile's wrapper for that side, in the style of the existing calls, and don't send what the wrapper adds: `fix`.
 - No raw text, query, prompt, email, phone number or secret is sent anywhere: `blocker`.
 
@@ -72,7 +73,7 @@ You get numbered findings (F1, F2, ...), each with the code and the data it cite
 - Check the queries it cites against the snapshot's numbers (`.datalyze/cache/snapshot.json`, or the file you were given): every figure there names the query behind it. A `dq` query's SQL and answer are in `queries`: read the SQL for what it really counts (the wrong event, a missing day filter, sampled or not-measured days read as zero), and when the audit's records are there, use `data_query` to look for the other explanation yourself (another platform or library sending it, the change starting on another day).
 - **"Broken" needs data.** A finding that calls an event broken, dead or not arriving needs data showing nothing arrives. A call that looks correctly wired with no stats for it is not broken: `undecided` at most. A call under seven days old is "not yet arriving".
 
-Then assume each `ok` is wrong and try to break it, from the code: find a path where the event fires before the work succeeds (C2), a place the action happens without it: another button, the API called directly, a job, the mobile app (C3), a property missing on some call site or path (C7), a way a value is sent null, empty or as a placeholder: an optional chain, a value read before it loads, `String(undefined)` (C8). Check the snapshot's null, empty and placeholder rates too.
+Then assume each `ok` is wrong and try to break it, from the code: find a path where the event fires before the work succeeds (C2), a place the action happens without it: another button, the API called directly, a job, the mobile app (C3), a property missing on some call site or path (C7), a way a value is sent null, empty or as a placeholder: an optional chain, a value read before it loads, `String(undefined)` (C8). Check the snapshot's null, empty and placeholder rates too. You also get the area's property conditions, each a claim that a property applies only sometimes (`checkout_completed.coupon applies only when a coupon is applied`): break one by finding a path outside its condition where the property means something, or a path inside it that doesn't send it.
 
 One line per finding, then one per verdict:
 

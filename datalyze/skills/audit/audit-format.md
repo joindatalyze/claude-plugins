@@ -4,8 +4,8 @@
 
 **You never write `audit.json` by hand.** You write two kinds of working file in `.datalyze/cache/cards/` (never committed), and `assemble_audit` builds `audit.json` from them, `match`'s items and the snapshot:
 
-- **`<area>.json`, one per area** (at most 25 events; `checkout-1.json`, `checkout-2.json` for a bigger one; `unplanned.json` for events not in the plan): `{ "area": "checkout", "events": [ cards ], "property_suggestions": [ suggestions ] }`. Suggestion ids only need to be unique in their file: `assemble_audit` numbers them S1, S2... across the audit.
-- **`_audit.json`, one:** everything else in the example below except `items`, `health`, `snapshot_source`, `events` and `property_suggestions`, which the tool fills in. It adds `not_findings` (below), `dismissed` (the findings the verifier disproved), `incomplete_areas` when the run must stop with areas left, and on the first audit `baselined` (below).
+- **`<area>.json`, one per area** (at most 25 events; `checkout-1.json`, `checkout-2.json` for a bigger one; `unplanned.json` for events not in the plan): `{ "area": "checkout", "events": [ cards ], "property_suggestions": [ suggestions ], "property_conditions": [ conditions ] }`. Suggestion and condition ids only need to be unique in their file: `assemble_audit` numbers them S1, S2... and W1, W2... across the audit.
+- **`_audit.json`, one:** everything else in the example below except `items`, `health`, `snapshot_source`, `events`, `property_suggestions` and `property_conditions`, which the tool fills in. It adds `not_findings` (below), `dismissed` (the findings the verifier disproved), `incomplete_areas` when the run must stop with areas left, and on the first audit `baselined` (below).
 
 `_verified.json` beside them is the tools' own record of what each verifier round checked: never write or edit it.
 
@@ -60,6 +60,12 @@
     { "id": "S1", "event": "checkout_completed", "property": "coupon_applied", "type": "boolean",
       "question": "Do coupons change how many checkouts complete?",
       "evidence": [{ "code": "app/checkout/pay-button.tsx:41", "quote": "const { coupon } = useCart()" }] }
+  ],
+  "property_conditions": [
+    { "id": "W1", "event": "checkout_completed", "property": "coupon", "only_when": "a coupon is applied",
+      "why": "Only the coupon branch of applyDiscount has a code; the saved-card and plain checkouts have none to send.",
+      "in_plan": true,
+      "evidence": [{ "code": "app/checkout/pay-button.tsx:41", "quote": "const { coupon } = useCart()" }, { "code": "app/checkout/one-click.tsx:22", "quote": "track('checkout_completed', { cart_id, amount })" }] }
   ],
   "incomplete_areas": [],
   "dismissed": [
@@ -119,6 +125,7 @@
   - `could_carry` with `suggestion` lists at most two `suggestions` ids, only on tiers other than `other`.
   - **`match`'s warnings stand.** The screen shows each item's `checks` on its own row under the event, as `match` wrote them. A check whose warning `match` raised (`property_null` on `values_filled`, `double_firing` on `once`: the table in `event-check.md`) can't be `ok` unless the card explains the warning in `warning_notes`: `[{ "warning": "property_null.coupon", "note": "Expected: blank means no coupon." }]`, the id being the warning's `kind`, then `.` and its `property` when it has one. The note shows beside the warning; it never hides it. `assemble_audit` refuses an `ok` without one, and a note on a warning `match` didn't raise.
   - `properties` is filled in by `assemble_audit` from the snapshot. Evidence whose quote isn't in the code drops that one check to `not_measured`, with a `note` saying so. Evidence in the wrong shape (`{ "query": { "query": "pull_properties" } }`, a `code` without `:line`) is refused, printed as written: the query id is always a plain string. A `fires` check's own count must be in something it cites: the snapshot's counts (`pull_counts`), or a `data_query` answer that counts its event (`count(*) FILTER (event = 'Payment Initiated')` answers 0 for an event with no records). An answer that only counts the events around it can stand beside one of those, never alone.
+- **`property_conditions`:** every property this audit decided applies only sometimes (`knowledge` "Only when"): the card's `event`, the `property`, `only_when` (when it applies, `<property>=<value>` where another property decides it), `why` (why the paths that don't send it don't need it, in one line), `in_plan` and `evidence` (a call that sends it and one that doesn't). On the first audit, every `only_when` you wrote into the plan, with `in_plan: true` (`assemble_audit` refuses one left out). On a later audit, every `required: false` or blank example you decided is a real exception (an `unexplained_exception` on its card), with `in_plan: false`: the plan doesn't change in an audit, so the fix writes it once the person keeps it. One the team already decided (`decisions.yaml`, `property: <event>.<name>`, `decision: only_when` or `always`) stands: never list it again. The person picks Keep (recorded; the fix writes it into the plan when `in_plan` is false) or Every path (the fix sends the property on every path and removes the exception).
 - **`property_suggestions`:** C10. Each names its card's `event`, the `property`, its `type`, the `question` it answers and `evidence`: the value already at the call site. Never one `decisions.yaml` skipped (`property: <event>.<name>`, `decision: skip`). The person picks Add (built by the fix run as an extend) or Skip (recorded in `decisions.yaml`).
 - **`not_read`:** written by `assemble_audit`, never by you: the code files in languages the scan doesn't open, by language and top folder. Say in `audit.md`'s "what couldn't be seen" that events sent from there aren't checked.
 - **`dismissed`:** every draft finding the verifier disproved: its `title`, the verifier's `reason`, and the `items` it was about. The screen lists them, folded, under "Dismissed by the verifier", so nothing is dropped without a trace.
