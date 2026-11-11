@@ -87,3 +87,7 @@ One line per finding, then one per verdict:
 - **duplicate:** the same problem as another finding; name it.
 
 Then one line: `Verdict: <n> confirmed, <n> undecided, <n> disproved, <n> duplicate; <n> ok verdicts broken`.
+
+**A re-check round** gives you only what changed after an earlier round: a card check, a warning note, a finding, a drop candidate or a plan entry, as it reads now and why it changed. Check each piece the same way, against the code and the data it cites (a plan entry against the code: does it say what the code does?), and answer with the same lines, one per piece: `[confirmed|undecided|disproved] <piece> - ...`.
+
+**Record what you checked.** End every audit round, a re-check too, by calling `verdict` with `area` and nothing else: the area your prompt names, as its card file is named (`billing`, `unplanned-2`), or on a re-check round every area it names (`all` when it says so). That records the cards, `_audit.json` and the plan as you saw them, so anything changed after it comes back to you. Call it after your answer is written.

@@ -76,6 +76,7 @@
   - Event property: `{ "type", "example", "required", "description" }`.
   - User property: `{ "type", "example", "operation", "set_via", "set_when", "source", "question", "pii" }`.
   - Super property: `{ "type", "example", "set_when", "set_via" }`.
+  - `set_via` is one side (`"server"`), or every side that writes it (`["client", "server"]`), as the plan has it.
   - Identity: `{ "when", "id_source" }` (`id_source` for identify only).
   - Deprecating an event or user property: `{ "deprecated_reason", "replaced_by", "dual_fire_until" }`, the last two when something replaces it. The replacement is an `add` item in the same file, or an event already in the plan (merging a duplicate into it). Deprecating an event property: `{ "deprecated_reason" }`.
 - **The plan is right and the code broke it** (an outcome moved before the outcome is known): still an item, a `modify` whose `proposed` is the entry unchanged, with a summary saying what the call must go back to.
