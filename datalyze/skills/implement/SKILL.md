@@ -54,7 +54,7 @@ The verifier records its own result with its `verdict` tool; never call that too
 
 ## 5. Keep every verified item
 
-Only mark an item built (`implemented: true`, or `done` in a work list) when the code sends it: after the run, the action scans the code, and an event that isn't sent, or is sent without its planned properties, goes back to not built with the reason. Keep every item that passed the checks and the verifier. Hold back only the items with open questions: undo their edits in the plan and the code, and list them in the report with the question. One bad item never loses the rest.
+Only mark an item built (`implemented: true`, or `done` in a work list) when the code sends it: after the run, the action scans the code, and an event that isn't sent, or is sent without its planned properties, goes back to not built with the reason. Keep every item that passed the checks and the verifier. Hold back only the items with open questions: undo their edits in the plan and the code, and list them in the report with the question. One bad item never loses the rest. Don't write a question about a rule the plan breaks (a name, `status` without `failure_reason`): the action asks those itself after the run, with a fix that passes, so just hold the item back and say which rule. An answer "Rename it to X" renames it in the plan and the code; "Leave it out of this pull request" leaves the item unbuilt and its edits undone, as if rejected.
 
 When the run built from a proposal, also add each held-back item's question to the proposal file's `questions`, with `item` set to its id, the options and your `recommended` (format in `../review/proposal-format.md`). That is where the Datalyze UI shows it and the person answers; the next run builds from the answer.
 
