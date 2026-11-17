@@ -3,6 +3,10 @@
     "datalyze": {
       "command": "node",
       "args": ["${CLAUDE_PLUGIN_ROOT}/bin/datalyze.js", "mcp"]
+    },
+    "playwright": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/bin/datalyze.js", "browser-mcp", "@playwright/mcp@0.0.84", "--image-responses", "omit"]
     }
   }
 }
