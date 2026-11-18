@@ -17,14 +17,19 @@ Call `knowledge` first. Then call `setup_verify` with no arguments. No `verify:`
 
 The person names events (`checkout_completed`) or single properties (`signup_completed.plan`). If they say "everything" or an area, list what that is and confirm. Call `registry` for the plan entries. For each event, read its `fires_at`: each entry is one path to check (`event#0`, `event#1`, …). An event with no `fires_at` gets its places from `scan` and the code, as you would for the plan.
 
-**Group them into journeys:** one walk through the product that reaches several events (one checkout walk covers `checkout_started`, `payment_info_entered`, `checkout_completed`). Group by shared `page`, `from` and `needs`. Journeys that need the same account go one after another. With more than 25 events, say so, and verify them a journey at a time.
+**Plan them:** call `plan_verify` with the picks. It splits them in two, and you keep to its order:
+- **Checked from the data:** a path with `trigger: server` and no page (a reaper, a webhook, a pipeline step) is never a browser step. Don't open a page for it or list it as `couldnt_reach`: after the journeys, call `lookup_landed` with `data` set to these refs (and `since` the last deploy, when you know it). No rows in the window is `not_measured`, not a problem.
+- **Journeys,** one walk through the product that reaches several events (one checkout walk covers `checkout_started`, `payment_info_entered`, `checkout_completed`), in the order that never uses up a state a later path needs. Paths that need a fresh browser ("no email given yet", "signed_out", "not signed in", "first visit") run before the steps that use it up: the views first, then the submits, then paths with no state, then each role's signed-in paths, one account after another. Signing in, or giving an email, can't be undone in a run: browser storage setters are refused.
+- **Conflicts** it names need the state back. Ask the person to clear the site's data in the verification browser (`ask_person`, before the path: "clear this site's cookies and storage, then say done"), or put the path in `not_done` with the reason it gives. Never skip one silently. The verification profile keeps state between runs, so a fresh-state path can find its state already gone on the first page: treat that the same way.
+
+With more than 25 events, say so, and verify them a journey at a time.
 
 ## 3. Start the run
 
 1. Pick the environment: the one in `verify.web.environments`, or ask which. Production only if `allow_production` is true.
 2. Start capture, which opens a visible Chrome with its own profile for this repo:
    `node "${CLAUDE_PLUGIN_ROOT}/bin/datalyze.js" capture start --environment <name>`
-3. Call `check_environment`. If the URL serves a different commit, say so in one line: what's verified is what's deployed. If it doesn't answer, or refuses (401, 403), stop and say why.
+3. Call `check_environment`, after capture is running. If the URL serves a different commit, say so in one line: what's verified is what's deployed. If it doesn't answer, or refuses (401, 403), stop and say why. If it says the page sent no analytics to the environment's project ("Stop the run"), stop: tell the person what it saw and what to change (the init's host gate, the token, or a `probe` page that does send on load), and capture stop. No event can pass until the page sends.
 
 The browser tools are `mcp__plugin_datalyze_playwright__*`. Screenshots are off: read the page from its snapshot. `browser_evaluate`, routes, cookie and storage setters are refused during a run. Reach events through the page, or ask the person.
 
@@ -44,7 +49,7 @@ An event you can't reach after two tries and an ask is `couldnt_reach`: name the
 
 ## 5. Landing, the report, the verifier
 
-1. **Landing:** call `lookup_landed` once, after every journey. `pending` is never a problem: some tools can't confirm yet. Recheck later.
+1. **Landing:** call `lookup_landed` once, after every journey. Then once more with `data` for `plan_verify`'s data group, if there is one; those results have `reached_by: data`. `pending` is never a problem: some tools can't confirm yet. Recheck later.
 2. **Findings:** for every check that's a `problem`, find why in the code: the call site, what it sends and when. Write a finding (`verify-format.md`) with the code line quoted. Problems with one cause share one finding.
 3. Call `assemble_verify` with the selection, the findings, `not_done` and the journeys. Fix whatever `check_verify` reports.
 4. **The verifier:** if there are findings, give the `verifier` agent the path to `verify.json` and the finding ids, nothing else. Ask for verify mode. Wait for it. Write its line for each finding into the finding's `verifier` field; correct a cause or a fix it showed was wrong.
