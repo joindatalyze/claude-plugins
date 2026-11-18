@@ -33,7 +33,7 @@ Read `.datalyze/context.md` and `.datalyze/decisions.yaml` if it's there (the te
 
 ## 2. Change the plan and the calls
 
-- **The plan:** write each item into its area file under the registry, with a changelog line (date, the pull request or the branch, what changed). Keep each event's `fires_at` true to the calls you write (`event-structure.md`): a call you add, move or retrigger changes its entry; a call you remove takes its entry with it. A new property name goes into `_properties.yaml`.
+- **The plan:** write each item into its area file under the registry, with a changelog line (date, the pull request or the branch, what changed). Keep each event's `fires_at` true to the calls you write (`event-structure.md`): a call you add, move or retrigger changes its entry; a call you remove takes its entry with it. Every event an item touches leaves with a `fires_at` that matches the code, the new one of a rename or dual-fire included: write it where it's missing, from the call sites. A new property name goes into `_properties.yaml`.
 - **A property sent only sometimes** says when with `only_when`, from the code (`event-check.md`, "Only when"). Never write `required: false`, or `null` or `""` in an example, for it.
 - **A modify keeps everything it doesn't change.** Every description and property description the item doesn't touch stays word for word.
 - **The calls:** through the wrapper the tracking profile names for that side, copying its example call: same import, same argument order, same style. Send exactly the plan's properties, with real values the code has at that moment. Fire at the moment the description says.
