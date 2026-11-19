@@ -19,7 +19,7 @@ Read `.datalyze/context.md` (the team's own words about their product), `.dataly
 
 The **first audit** is the one where the plan has no events yet (the setup skeleton). It also writes the first plan, in step 5.
 
-**Carrying on:** when the prompt says some areas already have cards (`.datalyze/cache/cards/`), don't redo them or clear the folder: do only the areas it lists, then steps 8 to 10.
+**Carrying on:** when the prompt says a run stopped part-way and lists the areas left, with the steps each lacks (its area file in the plan, step 5; its cards, step 6; what isn't tracked, step 7), don't redo the rest or clear `.datalyze/cache/`: keep `areas.json`, the cards and the step-7 files there, do exactly what it lists for each area, in that order, one subagent per area, then steps 8 to 10. An area in the plan only once its file is written: `match` then places its events, and `unplanned` keeps only what no area sends.
 
 ## 3. Find every tracking call
 
@@ -33,7 +33,9 @@ For each area, list its actions in the map: every action a person can take there
 
 Then map each event, as `event-check.md` says: every call site, what triggers it (`scan` gives each JS or TS call's `within`, `component`, `trigger` and `after`; read one level up and down from there), which side sends it, where each property's value comes from and, path by path, whether each property means something there (`event-check.md`, "Only when"), its funnel, its tier (core, money, onboarding, identity, funnel or other), and every place the same action happens that doesn't send it. `match` dates each call from git for the seven-day rule.
 
-Keep the map in `.datalyze/cache/event-map.json`, for this run only. It is never committed.
+Keep the map in `.datalyze/cache/event-map.json` (or one `.datalyze/cache/event-map/<area>.json` per area when each area's subagent maps its own), for this run only. It is never committed.
+
+Unless you're carrying on, clear `.datalyze/cache/untracked/` (an earlier run's answers). **Before any area's work starts, write the list of areas to `.datalyze/cache/areas.json`:** `{ "areas": [{ "area": "billing", "name": "Billing" }] }`, one entry per area, its `area` the slug its plan file, card file and step-7 file use (lowercase, hyphens). Datalyze reads this list to tell what a run that stopped part-way still has to do, so write it as soon as the areas are known, before the first plan or any subagent, and keep it to the areas you will really do: an area dropped later comes off it.
 
 ## 5. Collect the data, and on the first audit write the first plan
 
@@ -91,7 +93,7 @@ Area subagents may call `data_query` too (never `snapshot`); give them this sect
 - **Proposed:** every untracked action that list names (sign-up and login, each onboarding screen, the first value moment, each core action that creates, changes, uses, exports, shares or invites, each state change, every money outcome, every server outcome with no person present, and the start of each flow that can fail or be abandoned) gets a proposed event, however many that is. There is no count in an audit (`what-to-track.md`, "The budget"). Shape them by the same rules: one event with a property over several (`onboarding_step_completed` with `step` only where the screens aren't onboarding; `invite_sent` with `entry_point`), outcomes with `status` and `failure_reason`, names in the team's convention. Any other untracked action you propose needs its reason: the question it answers that no other event can.
 - **Not proposed:** every other untracked action, with the reason in one line (a "what not to track" rule, an existing event that answers its question, autocapture covers it, nobody decides anything on it). When you aren't sure, list it here with your doubt, or make it an open question with your recommendation.
 
-The subagent answers one line per untracked action: `propose <event>: <action>, tier, the question it answers, file:line`, or `skip <action>: reason, file:line`. Every untracked action in the area's list gets one of the two.
+The subagent answers one line per untracked action: `propose <event>: <action>, tier, the question it answers, file:line`, or `skip <action>: reason, file:line`. Every untracked action in the area's list gets one of the two. It also writes them to `.datalyze/cache/untracked/<area>.json`: `{ "area": "billing", "untracked": [{ "action": "…", "where": "file:line", "decision": "propose", "event": "invoice_paid", "reason": "the question it answers" }, { "action": "…", "where": "file:line", "decision": "skip", "reason": "…" }] }`, with `"untracked": []` when every action in the area already has an event. An area without this file counts as not looked at, and the run isn't finished until every area in `areas.json` has one.
 
 Then write them up. Each proposed event goes on a finding (`proposed_events`), one finding per action, or per flow when its events share one fix (`audit_started` and `audit_completed` for the audit run), never one finding for a whole product: "Tracking Agent onboarding and audits are not tracked" is several findings. Its severity follows the tier: money, sign-up, onboarding and the core action are high. Every action you don't propose goes in `_audit.json`'s `not_proposed` (`audit-format.md`), so the person sees what was looked at and left, and can add it in the fix.
 
