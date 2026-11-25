@@ -23,7 +23,9 @@ Ask them a few at a time, in plain words. Offer what you can read from the repo 
 5. **Is there protection in front of it?** For example Vercel deployment protection or basic auth. Its token or password is a secret: name it (`VERCEL_BYPASS`).
 6. **Test accounts, one per role the plan needs.** `setup_verify` says which roles `fires_at.needs` names. For each: the role, how it signs in (`email_password`, `magic_link`, `phone_otp`, `google`, `sso`, `other`), the username, the password's secret name, and the one-time code: `fixed` (a test number's code, as a secret), `totp` (the TOTP secret, as a secret) or `ask` (the person types it each time). If there are several alike for parallel runs, use `pool` and `{n}` in the username. Google and SSO sign-ins can't be automated: the first run asks the person to sign in once in the verification browser.
 7. **Payments.** The provider (`stripe`, `razorpay`, `other`, `none`) and `test` or `ask`. Offer the provider's published test values, checked against its docs now, never from memory. Test card numbers and test UPI ids are public, not secrets.
-8. **Anything a tester should know** (a coupon that always works, a feature flag to turn on). This goes in `notes`.
+8. **Does tracking go through anything before the analytics tool?** Read the analytics wrapper first and offer what it shows. Segment and RudderStack need nothing here: capture reads their format wherever they send. A team's own endpoint (the wrapper posts to `/api/track` and the server passes it on) goes in `forwarders`: its `path`, and when the person or the code says how the body is shaped, the fields to read: `event` (the field holding the event name, dotted for nesting: `payload.name`), and optionally `properties`, `user`, `id`, `time`, and `list` when the body holds an array of events. Without `event`, capture only knows that endpoint forwards: its events are checked in the analytics tool, never called missing.
+9. **Is there a cookie consent banner?** Nothing to write here: the first run accepts it in the browser and saves the steps (`save_path { consent: true }`), and every later run accepts it on a fresh browser.
+10. **Anything a tester should know** (a coupon that always works, a feature flag to turn on). This goes in `notes`.
 
 ## 3. Write it
 
@@ -38,6 +40,8 @@ environments:
     read_key: STAGING                               # optional
     served_commit: header x-build-sha               # optional: header <name> | meta <name> | none
     bypass: { kind: vercel, secret: VERCEL_BYPASS } # optional; basic_auth adds username
+forwarders:                                         # optional: the app's own endpoints that pass events on
+  - { path: /api/track, event: event, properties: properties, user: userId }
 allow_production: false
 accounts:
   - { role: member, login: email_password, username: qa+member@acme.com, password: MEMBER_PASSWORD, otp: ask }

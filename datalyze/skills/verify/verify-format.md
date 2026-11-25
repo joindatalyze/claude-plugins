@@ -53,4 +53,6 @@ Tested paths, replayed by `replay_path` without the model. `save_path` writes th
 | `wait_for` | `url`, a locator to be visible, or `time` in seconds |
 | `totp` | the locator and `account`: the runner fills the code |
 
+`consent` holds the steps that accept the site's cookie banner, saved with `save_path { consent: true, steps }` (by hand, never drafted): clicks on the banner, no fills and no labelled events. `check_environment` runs it before its probe and `replay_path` after a path's first page opens, only when the banner's first element shows within 4 seconds; otherwise they skip it, since this browser already gave consent.
+
 `label_event` on a step names the event it should fire (`checkout_completed#0`, or a list). Never a snapshot ref (`e12`) or a CSS selector: they don't survive a reload.
