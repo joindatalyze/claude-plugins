@@ -31,6 +31,8 @@ With more than 25 events, say so, and verify them a journey at a time.
    `node "${CLAUDE_PLUGIN_ROOT}/bin/datalyze.js" capture start --environment <name>`
 3. Call `check_environment`, after capture is running. If the URL serves a different commit, say so in one line: what's verified is what's deployed. If it doesn't answer, or refuses (401, 403), stop and say why. If it says the page sent no analytics to the environment's project ("Stop the run"), stop: tell the person what it saw and what to change (the init's host gate, the token, or a `probe` page that does send on load), and capture stop. No event can pass until the page sends.
 
+If the environment has a `tag` (`utm_source=datalyze-verify`), add it to every page of the environment's site you open with `browser_navigate`, reloads included: it's how the team filters the run's traffic out of its reports. `replay_path` and the probe add it themselves.
+
 The browser tools are `mcp__plugin_datalyze_playwright__*`. Screenshots are off: read the page from its snapshot. `browser_evaluate`, routes, cookie and storage setters are refused during a run. Reach events through the page, or ask the person.
 
 ## 4. Each journey
