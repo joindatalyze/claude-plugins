@@ -21,6 +21,7 @@ You get the code diff, the registry diff, and the decisions a person already mad
 - A call deleted while its plan entry is still live: `blocker`.
 - A rename done in place instead of deprecate and `replaced_by`, or a `replaced_by` with no replacement written: `blocker`.
 - `identify` moved after events that need the person, or `reset` missing on a logout path: `blocker`.
+- A server event sent as another id than the one the client identifies the person with (an email, a session or account id, the anonymous id after sign-in), against `_identity.yaml`'s `server`: `blocker`.
 - A new way into an existing action with no new `entry_point` value: `fix`.
 
 **3. Necessity.** For each new event or user property: would someone really ask its question? Should it be a property or an enum value on an existing event? Is it a button, tab, hover or view with no decision behind it? More new events than the budget without a reason each? Each is a `fix`, except for an item a person approved: then it is a `question`.

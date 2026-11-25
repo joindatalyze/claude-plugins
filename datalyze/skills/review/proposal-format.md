@@ -71,14 +71,14 @@
 - **`verdict`:** `no_change` only when there are no items and no questions. Anything else is `changes_proposed`, so a question is never hidden behind "no change needed".
 - **`kind`:** `event`, `event_property`, `user_property`, `super_property` or `identity`.
 - **`action`:** `add`, `extend`, `modify` or `deprecate`.
-- **`target`:** the name as it is in the plan at the base: an event (`checkout_started`), an event property (`checkout_started.coupon_code`), a user or super property (`plan_tier`), or `identify`, `alias` or `reset`. An item the change deleted from the plan is named as it was on the base. A new event names its `area` (the registry file, without `.yaml`).
+- **`target`:** the name as it is in the plan at the base: an event (`checkout_started`), an event property (`checkout_started.coupon_code`), a user or super property (`plan_tier`), or `identify`, `alias`, `reset` or `server`. An item the change deleted from the plan is named as it was on the base. A new event names its `area` (the registry file, without `.yaml`).
 - **`proposed`:** the complete entry after the change, in registry format, with real example values. A new event carries its `question`. Every field the item doesn't change is copied from the plan word for word.
   - Event: its `fires_at` (`event-structure.md`) changes with the call sites: an item that adds a call site, moves one to another page or element, or changes its trigger carries the whole new `fires_at` in `proposed`.
   - Event property: `{ "type", "example", "only_when", "description" }`. `only_when` only when the property applies on some paths, with when, from the code (`status=failed`, or in words); left out, it's sent and filled on every path. Never `required: false`, or `null` or `""` in `example`, for "sometimes missing".
   - User property: `{ "type", "example", "operation", "set_via", "set_when", "source", "question", "pii" }`.
   - Super property: `{ "type", "example", "set_when", "set_via" }`.
   - `set_via` is one side (`"server"`), or every side that writes it (`["client", "server"]`), as the plan has it.
-  - Identity: `{ "when", "id_source" }` (`id_source` for identify only).
+  - Identity: `{ "when", "id_source" }` (`id_source` for identify only). The server's id (`target: server`): `{ "id_source", "same_as_client", "why" }`, when a change makes the server send as another id or starts sending events from the server.
   - Deprecating an event or user property: `{ "deprecated_reason", "replaced_by", "dual_fire_until" }`, the last two when something replaces it. The replacement is an `add` item in the same file, or an event already in the plan (merging a duplicate into it). Deprecating an event property: `{ "deprecated_reason" }`.
 - **The plan is right and the code broke it** (an outcome moved before the outcome is known): still an item, a `modify` whose `proposed` is the entry unchanged, with a summary saying what the call must go back to.
 - **`breaking: true`** for anything that changes what past data means. A changed firing moment's `changelog` starts with `SEMANTICS:`.
